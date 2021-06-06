@@ -2,6 +2,8 @@ from flask import Flask, redirect, request
 import requests
 import sys
 import os
+import base64
+import json
 app = Flask(__name__)
 
 authURL="""https://accounts.spotify.com/authorize?client_id=16a37ceafc804f8a96c5988a6d460d73&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A1025%2Fcallback&scope=user-read-private%20user-read-email&state=34fFs29kd09"""
@@ -15,6 +17,7 @@ def callback():
     code = request.args.get("code")
     if code is not None:
         state = request.args.get("state")
+        print("======== CODE ======== \n" + code + "\n===================")
         getTokens(code)
         return "Authed " + state
     else:
@@ -22,22 +25,21 @@ def callback():
 
 
 def getTokens(code):
-    dictToSend = {"grant_type":"authorization_code",
-                    "code":code,
-                    "redirectURI":"http://localhost:1025/callback"
-                    }
-    res = requests.post('https://accounts.spotify.com/api/token', json=dictToSend)
-    print('response from server:',res.text)
-    dictFromServer = res.json()
+    url = 'https://accounts.spotify.com/api/token'
 
-
-    url = 'https://somedomain.com'
-    body = {"grant_type":"authorization_code",
+    params = {"grant_type":"authorization_code",
             "code":code,
-            "redirectURI":"http://localhost:1025/callback"}
-    headers = {'Authorization': 'Basic '}
+            "redirect_uri":"http://localhost:1025/callback",
+            "client_id":clientID, "client_secret":clientSecret}
 
-    r = requests.post(url, data=json.dumps(body), headers=headers)
+    cred = {"client_id":clientID, "client_secret":clientSecret}
+
+    r = requests.post(url, data=params)
+
+    print("=====================")
+    print(r.json())
+    #print(json.dumps(r.json(), indent=2))
+    print("=====================")
 
 
 
@@ -49,15 +51,13 @@ with open("credentials.txt") as credFile:
     lines = credFile.readlines()
     count = 0
 
-    
     if len(lines) < 2:
         print("ERROR: Credentials not provided in credentials.txt")
         exit(0)
     
-    for line in lines:
-        count += 1
-        print("Line{}: {}".format(count, line.strip()))
-    
-    clientID = lines[0]
-    clientSecret = lines[1]
+    clientID = lines[0].strip()
+    clientSecret = lines[1].strip()
+
+print("AUTH: Using client_id = " + clientID)
+print("AUTH: Using client_secret = " + clientSecret)
 
