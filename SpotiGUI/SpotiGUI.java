@@ -1,4 +1,4 @@
-import io.javalin.Javalin;
+package SpotiGUI;
 
 public class SpotiGUI {
     private static String portNum;
@@ -11,10 +11,7 @@ public class SpotiGUI {
         }
         System.out.println("AUTH: Using port " + portNum + " for auth server");
 
-
-
-        Javalin app = Javalin.create().start(7000);
-        app.get("/", ctx -> ctx.result("Hello World"));
+        while (true);
     }
 
 
