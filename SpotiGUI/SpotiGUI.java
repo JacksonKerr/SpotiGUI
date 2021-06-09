@@ -88,6 +88,8 @@ class CredGetter extends Thread {
         while (true) {
             try {
                 ServerSocket ss = new ServerSocket(transitPort); // don't need hostname??
+
+                System.out.println("CredGetter: listening on port " + transitPort);
                 Socket socket = ss.accept(); // blocking call, wait until connection is attempted.
     
                 // get the input stream from the connected socket

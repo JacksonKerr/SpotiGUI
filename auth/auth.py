@@ -64,7 +64,7 @@ def initialAuth(code):
 # TODO make this work
 def transmitAuthInformation(accessToken, refreshToken):
     s = socket.socket()
-    s.connect(('0.0.0.0',1026))
+    s.connect(('0.0.0.0', int(transitPort)))
 
     data = (accessToken + " " + refreshToken)
 
@@ -106,6 +106,7 @@ with open("configuration.conf") as confFile:
             redirectURI = stripComments(line).replace("redirectURI=", "")
         elif "transitPort" in line:
             transitPort = stripComments(line).replace("transitPort=", "")
+            print("auth.py: Using transit port " + transitPort)
 
 if __name__ == '__main__':
     if (len(sys.argv) < 2):
