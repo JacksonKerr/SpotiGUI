@@ -89,6 +89,7 @@ clientID = ""
 clientSecret = ""
 redirectURI = ""
 transitPort = ""
+authPagePort = ""
 
 with open("configuration.conf") as confFile:
     lines = confFile.readlines()
@@ -106,3 +107,15 @@ with open("configuration.conf") as confFile:
         elif "transitPort" in line:
             transitPort = stripComments(line).replace("transitPort=", "")
 
+if __name__ == '__main__':
+    if (len(sys.argv) < 2):
+        print("ERROR: correct usage python3 auth.py <port number>")
+        exit(1)
+
+    authPagePort = int(sys.argv[1])
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('0.0.0.0', authPagePort))
+    port = sock.getsockname()[1]
+    sock.close()
+    app.run(port=port)

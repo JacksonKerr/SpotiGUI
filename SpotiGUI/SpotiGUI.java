@@ -9,15 +9,43 @@ public class SpotiGUI {
     private static String clientID;
     private static int transitPort;
 
+    private static CredGetter credentials;
+
     public static void main(String[] args) {
-        System.out.println("Started Java");
+        // Read clientID and available port number from configuration.conf
+        readConfiguration();
+
+        // Start credential reciever
+        credentials = new CredGetter("1", transitPort);
+        credentials.start();
+
+        // TODO open default gui here and announce waiting for connection.
+        // should also give machine's ip and port number
+
+        while (credentials.getAccessToken() == null) {
+            try {
+                Thread.sleep(1000);
+            } catch(InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        System.out.println(credentials.getAccessToken());
+    }
+
+    /**
+     * Reads relevant fields from configuration.conf
+     * 
+     * Currently:
+     *  - clientID      : For use interacting with api
+     *  - transitPort   : Port used for getting OAuth tokens from auth.py
+     */
+    private static void readConfiguration() {
         // Get clientID and port numbers from configuration.conf
         File configFile = new File("configuration.conf");
         try {
             Scanner sc = new Scanner(configFile);
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
-                // Remove comments and whitespace
 
                 // Remove comments & whitespace
                 line = line.split("#")[0].replaceAll("\\s+","");
@@ -34,47 +62,63 @@ public class SpotiGUI {
             e.printStackTrace();
             System.exit(1);
         }
+    }
+}
 
-        System.out.println("clientID = " + clientID);
 
 
-        try {
-            ServerSocket ss = new ServerSocket(transitPort); // don't need hostname??
-            System.out.println("ServerSocket awaiting connection on port "+transitPort);
-            Socket socket = ss.accept(); // blocking call, wait until connection is attempted.
-            System.out.println("Connection from " + socket + "!");
 
-            // get the input stream from the connected socket
-            InputStream inputStream = socket.getInputStream();
-            // create a DataInputStream so we can read data from it.
-            DataInputStream dataInputStream = new DataInputStream(inputStream);
+/**
+ * CredGetter by Jackson Kerr
+ * 
+ * Recieves 
+ */
+class CredGetter extends Thread {
+    private Integer transitPort;
 
-            // read the message from the socket
-            String tmp;
-            while ((tmp = dataInputStream.readLine()) != null) {
-                System.out.println(tmp);
+    private String refreshToken;
+    private String accessToken;
+
+    public CredGetter(String str, int transitPort) {
+        super(str);
+        this.transitPort = transitPort;
+    }
+
+    public void run() {
+        while (true) {
+            try {
+                ServerSocket ss = new ServerSocket(transitPort); // don't need hostname??
+                Socket socket = ss.accept(); // blocking call, wait until connection is attempted.
+    
+                // get the input stream from the connected socket
+                InputStream inputStream = socket.getInputStream();
+                // create a DataInputStream so we can read data from it.
+                DataInputStream dataInputStream = new DataInputStream(inputStream);
+    
+                // read the message from the socket
+                String data;
+                while ((data = dataInputStream.readLine()) != null) { // TODO remove depreciated
+                    String[] tokens = data.split(" ");
+
+                    this.accessToken = tokens[0];
+                    this.refreshToken = tokens[1];
+                }
+                ss.close();
+                socket.close();
+
+            } catch (IOException e) {
+                System.out.println("ERROR: Error recieving tokens from auth.py");
+                e.printStackTrace();
+                System.exit(1);
             }
-
-            System.out.println("Closing sockets.");
-            ss.close();
-            socket.close();
-        } catch (IOException e) {
-            System.out.println("ERROR: IOException");
-            e.printStackTrace();
-            System.exit(1);
         }
     }
 
-    /***
-     * @param givenPort
-     * @return true if givenPort is a valid port number
-     */
-    private static Boolean validPortNumber(String givenPort) {
-        if (givenPort.length() > 0 && givenPort.matches("[0-9]+"))  { // Check is numeric
-            return true;
-        } else {
-            return false;
-        }
+    public String getRefreshToken() {
+        return this.refreshToken;
     }
 
+    public String getAccessToken() {
+        return this.accessToken;
+    }
 }

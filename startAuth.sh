@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# If aditional arg exists, use it as the port number of the login page
 authPort="$1";
 if [ $# -eq 0 ]
   then
@@ -6,10 +8,10 @@ if [ $# -eq 0 ]
     authPort="1025";
 fi
 
-# Starting flask
+# Start flask in new terminal window
 export FLASK_APP="auth/auth.py";
-gnome-terminal -- flask run --host=0.0.0.0 --port=$authPort;
+gnome-terminal -- python3 auth/auth.py $authPort;
 
-# Starting java
+# Start SpotiGUI
 javac SpotiGUI/*.java;
 java SpotiGUI/SpotiGUI;
