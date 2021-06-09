@@ -1,3 +1,4 @@
 *.class
-credentials.txt
+configuration.conf
 auth/__pycache__
+__pycache__
